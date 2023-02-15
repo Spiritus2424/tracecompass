@@ -15,7 +15,7 @@ COPY ./ /app/
 
 WORKDIR /app/
 
-RUN mvn clean install -DskipTests -Dmaven.test.skip=true -Pfilter-grammar -Pctf-grammar
+RUN mvn clean install -DskipTests -Dmaven.test.skip=true -Dskip-rcp -Pfilter-grammar -Pctf-grammar
 
 FROM alpine:3.16.0
 
