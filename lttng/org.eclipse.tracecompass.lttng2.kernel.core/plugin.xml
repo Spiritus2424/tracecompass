@@ -24,6 +24,12 @@
                class="org.eclipse.tracecompass.lttng2.kernel.core.trace.LttngKernelTrace">
             </tracetype>
       </module>
+      <parameterProvider
+            class="org.eclipse.tracecompass.internal.lttng2.kernel.core.CriticalPathParameterProvider">
+         <analysisId
+               id="org.eclipse.tracecompass.analysis.graph.core.criticalpath">
+         </analysisId>
+      </parameterProvider>
    </extension>
    <extension
          point="org.eclipse.linuxtools.tmf.analysis.xml.core.files">

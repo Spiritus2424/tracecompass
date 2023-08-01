@@ -9,8 +9,9 @@
  * SPDX-License-Identifier: EPL-2.0
  *******************************************************************************/
 
-package org.eclipse.tracecompass.internal.lttng2.kernel.core.criticalpath;
+package org.eclipse.tracecompass.internal.lttng2.kernel.core;
 
+import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.tracecompass.analysis.graph.core.criticalpath.AbstractCriticalPathModule;
 import org.eclipse.tracecompass.analysis.graph.core.criticalpath.OSCriticalPathModule;
 import org.eclipse.tracecompass.analysis.os.linux.core.execution.graph.OsWorker;
@@ -33,7 +34,7 @@ public class CriticalPathParameterProvider extends TmfAbstractAnalysisParamProvi
 
     private static final String NAME = "Critical Path Lttng kernel parameter provider"; //$NON-NLS-1$
 
-    private HostThread fCurrentHostThread = null;
+    @Nullable private HostThread fCurrentHostThread = null;
 
     /**
      * Constructor
@@ -55,8 +56,8 @@ public class CriticalPathParameterProvider extends TmfAbstractAnalysisParamProvi
     }
 
     @Override
-    public Object getParameter(String name) {
-        if (name.equals(AbstractCriticalPathModule.PARAM_WORKER)) {
+    public @Nullable Object getParameter(@Nullable String name) {
+        if (name != null && name.equals(AbstractCriticalPathModule.PARAM_WORKER)) {
             final HostThread currentHostThread = fCurrentHostThread;
             if (currentHostThread == null) {
                 return null;
@@ -72,7 +73,7 @@ public class CriticalPathParameterProvider extends TmfAbstractAnalysisParamProvi
     }
 
     @Override
-    public boolean appliesToTrace(ITmfTrace trace) {
+    public boolean appliesToTrace(@Nullable ITmfTrace trace) {
         return true;
     }
 
