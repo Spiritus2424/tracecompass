@@ -70,4 +70,15 @@ public class OSCriticalPathModule extends AbstractCriticalPathModule {
         return graph;
     }
 
+
+    /**
+     *
+     * @return Analysis Id
+     * @since 4.2
+     */
+    @SuppressWarnings("deprecation")
+    public static String getAnalysisId() {
+        return ANALYSIS_ID;
+    }
+
 }
