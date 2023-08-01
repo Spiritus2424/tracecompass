@@ -11,15 +11,21 @@
 
 package org.eclipse.tracecompass.internal.analysis.graph.core.dataprovider;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.tracecompass.analysis.graph.core.criticalpath.AbstractCriticalPathModule;
 import org.eclipse.tracecompass.analysis.graph.core.criticalpath.OSCriticalPathModule;
 import org.eclipse.tracecompass.tmf.core.analysis.IAnalysisModule;
+import org.eclipse.tracecompass.tmf.core.dataprovider.IDataProviderDescriptor;
 import org.eclipse.tracecompass.tmf.core.dataprovider.IDataProviderFactory;
+import org.eclipse.tracecompass.tmf.core.dataprovider.IDataProviderDescriptor.ProviderType;
+import org.eclipse.tracecompass.tmf.core.model.DataProviderDescriptor;
 import org.eclipse.tracecompass.tmf.core.model.tree.ITmfTreeDataModel;
 import org.eclipse.tracecompass.tmf.core.model.tree.ITmfTreeDataProvider;
 import org.eclipse.tracecompass.tmf.core.signal.TmfSignalHandler;
@@ -27,6 +33,8 @@ import org.eclipse.tracecompass.tmf.core.signal.TmfSignalManager;
 import org.eclipse.tracecompass.tmf.core.signal.TmfStartAnalysisSignal;
 import org.eclipse.tracecompass.tmf.core.signal.TmfTraceClosedSignal;
 import org.eclipse.tracecompass.tmf.core.trace.ITmfTrace;
+import org.eclipse.tracecompass.tmf.core.trace.TmfTraceUtils;
+
 
 /**
  * {@link IDataProviderFactory} for the {@link CriticalPathDataProvider}
@@ -37,6 +45,12 @@ public class OSCriticalPathDataProviderFactory implements IDataProviderFactory {
 
     private final Map<ITmfTrace, OSCriticalPathModule> map = new HashMap<>();
 
+    private static final IDataProviderDescriptor DESCRIPTOR = new DataProviderDescriptor.Builder()
+            .setId(CriticalPathDataProvider.ID)
+            .setName(Objects.requireNonNull(Messages.CriticalPathDataProviderFactory_title))
+            .setDescription(Objects.requireNonNull(Messages.CriticalPathDataProviderFactory_descriptionText))
+            .setProviderType(ProviderType.TIME_GRAPH)
+            .build();
     /**
      * Constructor, registers the module with the {@link TmfSignalManager}
      */
@@ -46,12 +60,22 @@ public class OSCriticalPathDataProviderFactory implements IDataProviderFactory {
 
     @Override
     public @Nullable ITmfTreeDataProvider<? extends ITmfTreeDataModel> createProvider(@NonNull ITmfTrace trace) {
+
+        // the DataProviderManager does not negative cache
+        OSCriticalPathDataProvider dataProvider = null;
         OSCriticalPathModule module = map.remove(trace);
-        if (module == null) {
-            // the DataProviderManager does not negative cache
-            return null;
+
+        if (module != null) {
+            dataProvider = new OSCriticalPathDataProvider(trace, module);
         }
-        return new OSCriticalPathDataProvider(trace, module);
+
+        return dataProvider;
+    }
+
+    @Override
+    public Collection<IDataProviderDescriptor> getDescriptors(@NonNull ITmfTrace trace) {
+        OSCriticalPathModule module = TmfTraceUtils.getAnalysisModuleOfClass(trace, OSCriticalPathModule.class, OSCriticalPathModule.getAnalysisId());
+        return module != null ? Collections.singletonList(DESCRIPTOR) : Collections.emptyList();
     }
 
     /**
@@ -71,6 +95,7 @@ public class OSCriticalPathDataProviderFactory implements IDataProviderFactory {
         }
     }
 
+
     /**
      * Remove the closed traces' Critical Path Module to avoid resource leaks.
      *
@@ -81,5 +106,6 @@ public class OSCriticalPathDataProviderFactory implements IDataProviderFactory {
     public synchronized void traceClosed(TmfTraceClosedSignal traceClosedSignal) {
         map.remove(traceClosedSignal.getTrace());
     }
+
 
 }

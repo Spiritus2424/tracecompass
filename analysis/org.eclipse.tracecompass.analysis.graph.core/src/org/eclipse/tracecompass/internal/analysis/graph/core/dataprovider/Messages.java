@@ -20,6 +20,14 @@ import org.eclipse.osgi.util.NLS;
  */
 public class Messages extends NLS {
     private static final String BUNDLE_NAME = "org.eclipse.tracecompass.internal.analysis.graph.core.dataprovider.messages"; //$NON-NLS-1$
+    /** The data provider title text */
+    public static String CriticalPathDataProviderFactory_title;
+    /**
+     * The data provider description text
+     */
+    public static String CriticalPathDataProviderFactory_descriptionText;
+    /** Text for links */
+    public static String CriticalPathDataProvider_link;
     /** Label for the arrow group */
     public static String CriticalPathDataProvider_GroupArrows;
     /** Label for network arrows */
