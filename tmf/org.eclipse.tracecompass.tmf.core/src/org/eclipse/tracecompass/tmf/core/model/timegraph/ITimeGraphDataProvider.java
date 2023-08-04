@@ -16,7 +16,9 @@ import java.util.Map;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.annotation.Nullable;
+import org.eclipse.tracecompass.tmf.core.action.ITmfActionDescriptor;
 import org.eclipse.tracecompass.tmf.core.model.tree.ITmfTreeDataProvider;
+import org.eclipse.tracecompass.tmf.core.response.ITmfResponse;
 import org.eclipse.tracecompass.tmf.core.response.TmfModelResponse;
 
 /**
@@ -85,4 +87,34 @@ public interface ITimeGraphDataProvider<M extends ITimeGraphEntryModel> extends 
      * @since 5.0
      */
     TmfModelResponse<Map<String, String>> fetchTooltip(Map<String, Object> fetchParameters, @Nullable IProgressMonitor monitor);
+
+
+    /**
+     * Computes a tool tip for a time stamp and entry.
+     *
+     * @param fetchParameters
+     *            Query parameters, specifies the timestamp and item on which to
+     *            give more information
+     * @param monitor
+     *            Progress monitor
+     *
+     * @return A {@link TmfModelResponse} that encapsulate a map of Tooltips
+     * @since 9.1
+     */
+    default TmfModelResponse<Map<String, ITmfActionDescriptor>> fetchActionTooltips(Map<String, Object> fetchParameters, @Nullable IProgressMonitor monitor) {
+        return new TmfModelResponse<>(null, ITmfResponse.Status.FAILED, "Not implemented"); //$NON-NLS-1$
+    }
+
+
+    /**
+     * @param actionId
+     *            ActionId
+     * @param inputParameters
+     * @param monitor
+     *            Progress monitor
+     * @since 9.1
+     */
+    default void applyAction(String actionId, Map<String, Object> inputParameters, @Nullable IProgressMonitor monitor) {
+    }
+
 }

@@ -21,6 +21,7 @@ import java.util.Map;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.jdt.annotation.Nullable;
+import org.eclipse.tracecompass.tmf.core.action.ITmfActionDescriptor;
 import org.eclipse.tracecompass.tmf.core.dataprovider.DataProviderManager;
 import org.eclipse.tracecompass.tmf.core.model.CommonStatusMessage;
 import org.eclipse.tracecompass.tmf.core.model.IOutputStyleProvider;
@@ -185,6 +186,28 @@ extends TmfTreeCompositeDataProvider<M, P> implements ITimeGraphDataProvider<M>,
             return new TmfModelResponse<>(null, ITmfResponse.Status.COMPLETED, CommonStatusMessage.COMPLETED);
         }
         return new TmfModelResponse<>(new OutputStyleModel(styles), ITmfResponse.Status.COMPLETED, CommonStatusMessage.COMPLETED);
+    }
+
+    @SuppressWarnings({"null"})
+    @Override
+    public @NonNull TmfModelResponse<@NonNull Map<@NonNull String, @NonNull ITmfActionDescriptor>> fetchActionTooltips(@NonNull Map<@NonNull String, @NonNull Object> fetchParameters, @Nullable IProgressMonitor monitor) {
+        Map<String, ITmfActionDescriptor> actionTooltips = new HashMap<String, ITmfActionDescriptor>();
+
+        for (P dataProvider: getProviders()) {
+            TmfModelResponse<Map<String, ITmfActionDescriptor>> response = dataProvider.fetchActionTooltips(fetchParameters, monitor);
+            Map<String, ITmfActionDescriptor> model = response.getModel();
+            if (model != null) {
+                actionTooltips.putAll(model);
+            }
+        }
+        return new TmfModelResponse<>(actionTooltips, ITmfResponse.Status.COMPLETED, CommonStatusMessage.COMPLETED);
+    }
+
+    @Override
+    public void applyAction(String actionId, Map<String, Object> inputParameters, @Nullable IProgressMonitor monitor) {
+        for (P dataProvider: getProviders()) {
+            dataProvider.applyAction(actionId, inputParameters, monitor);
+        }
     }
 
 }
