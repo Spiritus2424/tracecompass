@@ -31,10 +31,13 @@ import java.util.function.Predicate;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.jdt.annotation.Nullable;
+import org.eclipse.tracecompass.analysis.os.linux.core.action.FollowThreadAction;
 import org.eclipse.tracecompass.analysis.os.linux.core.event.aspect.LinuxTidAspect;
+import org.eclipse.tracecompass.analysis.os.linux.core.model.HostThread;
 import org.eclipse.tracecompass.analysis.os.linux.core.model.OsStrings;
 import org.eclipse.tracecompass.analysis.os.linux.core.model.ProcessStatus;
 import org.eclipse.tracecompass.analysis.os.linux.core.trace.IKernelTrace;
+import org.eclipse.tracecompass.internal.analysis.graph.core.dataprovider.CriticalPathDataProvider;
 import org.eclipse.tracecompass.internal.analysis.os.linux.core.Activator;
 import org.eclipse.tracecompass.internal.analysis.os.linux.core.kernel.Attributes;
 import org.eclipse.tracecompass.internal.analysis.os.linux.core.kernel.StateValues;
@@ -49,6 +52,10 @@ import org.eclipse.tracecompass.statesystem.core.exceptions.TimeRangeException;
 import org.eclipse.tracecompass.statesystem.core.interval.ITmfStateInterval;
 import org.eclipse.tracecompass.statesystem.core.interval.TmfStateInterval;
 import org.eclipse.tracecompass.tmf.core.TmfStrings;
+import org.eclipse.tracecompass.tmf.core.action.ITmfActionDescriptor;
+import org.eclipse.tracecompass.tmf.core.action.ITmfActionDescriptor.ActionType;
+import org.eclipse.tracecompass.tmf.core.action.ITmfActionDescriptor.ProviderType;
+import org.eclipse.tracecompass.tmf.core.action.TmfActionDescriptor;
 import org.eclipse.tracecompass.tmf.core.analysis.callsite.ITmfCallsiteResolver;
 import org.eclipse.tracecompass.tmf.core.dataprovider.DataProviderParameterUtils;
 import org.eclipse.tracecompass.tmf.core.event.aspect.ITmfEventAspect;
@@ -180,6 +187,7 @@ public class ThreadStatusDataProvider extends AbstractTmfTraceDataProvider imple
 
     private IOutputAnnotationProvider fEventAnnotationProvider;
 
+
     /**
      * Constructor
      *
@@ -195,6 +203,7 @@ public class ThreadStatusDataProvider extends AbstractTmfTraceDataProvider imple
         fModule = module;
         fEventAnnotationProvider = new EventAnnotationProvider<>(OsStrings.tid(), (unused -> true), (candidate) -> !(candidate instanceof IKernelTrace) && trace != candidate, LinuxTidAspect.class, trace,
                 (fetchParameters, monitor) -> fetchTree(fetchParameters, monitor));
+
     }
 
     @Override
@@ -715,6 +724,20 @@ public class ThreadStatusDataProvider extends AbstractTmfTraceDataProvider imple
         return entry != null ? entry.getId() : fTraceId;
     }
 
+
+    public Integer findThreadId(long entryId) {
+        Integer threadId = null;
+        for (Map.Entry<Integer,ThreadEntryModel.Builder> entry: this.fTidToEntry.entries()) {
+            if (entry.getValue().getId() == entryId) {
+                threadId = entry.getKey();
+                break;
+            }
+        }
+
+        return threadId;
+    }
+
+
     @Override
     public @NonNull String getId() {
         return ID;
@@ -793,6 +816,53 @@ public class ThreadStatusDataProvider extends AbstractTmfTraceDataProvider imple
             /* Ignored */
         }
         return new TmfModelResponse<>(null, status, statusMessage);
+
+
+    }
+
+    @SuppressWarnings({"nls", "null", "restriction"})
+    @Override
+    public @NonNull TmfModelResponse<@NonNull Map<@NonNull String, @NonNull ITmfActionDescriptor>> fetchActionTooltips(@NonNull Map<@NonNull String, @NonNull Object> fetchParameters, @Nullable IProgressMonitor monitor) {
+        List<Long> selectedItems = DataProviderParameterUtils.extractSelectedItems(fetchParameters);
+        if (selectedItems == null || selectedItems.isEmpty()) {
+            return new TmfModelResponse<>(null, ITmfResponse.Status.FAILED, CommonStatusMessage.INCORRECT_QUERY_PARAMETERS);
+        }
+        ITmfResponse.Status tmfResponseStatus = ITmfResponse.Status.COMPLETED;
+        String statusMessage = CommonStatusMessage.COMPLETED;
+        Map<String, ITmfActionDescriptor> actionTooltips = new HashMap<>();
+        TmfActionDescriptor.Builder builder = new TmfActionDescriptor.Builder();
+        Integer threadId = this.findThreadId(selectedItems.get(0));
+        if (threadId != null) {
+            Map<String, Object> followThreadInputParameter = new HashMap<>();
+            followThreadInputParameter.put("hostThread", new HostThread(this.getTrace().getHostId(), threadId));
+            ITmfActionDescriptor followThreadDescriptor = builder.setId(FollowThreadAction.getActionId())
+                    .setDescription("Critical Path")
+                    .setName("Follow Thread")
+                    .setProviderType(ProviderType.TIME_GRAPH)
+                    .setActionType(ActionType.INPUT_PROVIDER)
+                    .setActionTooltipMessage(String.format("Follow Thread %s", threadId))
+                    .setTargetProviderType(CriticalPathDataProvider.ID)
+                    .setInputParameters(followThreadInputParameter)
+                    .build();
+            actionTooltips.put(followThreadDescriptor.getId(), followThreadDescriptor);
+        } else {
+            tmfResponseStatus = ITmfResponse.Status.FAILED;
+            statusMessage = "Unable to find the Thread ID associated with the entry Id";
+        }
+
+        return new TmfModelResponse<>(actionTooltips, tmfResponseStatus, statusMessage);
+    }
+
+    @Override
+    @SuppressWarnings({"null", "nls", "unchecked"})
+    public void applyAction(String actionId, Map<String, Object> inputParameters, @Nullable IProgressMonitor monitor) {
+        if (actionId.equals(FollowThreadAction.getActionId()) && inputParameters.containsKey("hostThread")) {
+            @NonNull Map<String, Object> hostThread = (Map<String, Object>) inputParameters.get("hostThread");
+            if (this.getTrace().getHostId().equals(hostThread.get("host"))) {
+                FollowThreadAction followThreadAction = new FollowThreadAction(new HostThread((String) hostThread.get("host"), (Integer) hostThread.get("tid")));
+                followThreadAction.run();
+            }
+        }
     }
 
     @Override
@@ -825,4 +895,6 @@ public class ThreadStatusDataProvider extends AbstractTmfTraceDataProvider imple
     public @NonNull TmfModelResponse<@NonNull AnnotationModel> fetchAnnotations(@NonNull Map<@NonNull String, @NonNull Object> fetchParameters, @Nullable IProgressMonitor monitor) {
         return fEventAnnotationProvider.fetchAnnotations(fetchParameters, monitor);
     }
+
+
 }
