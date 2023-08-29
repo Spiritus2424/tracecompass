@@ -76,4 +76,34 @@ public class TcpEventKey implements IEventMatchingKey {
         }
         return false;
     }
+
+    @Override
+    public String toString() {
+        return "[" + fSeq + ", " + fAckseq + ", " + fFlags + "]";  //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+    }
+
+
+    /**
+     * @return Sequence Number
+     * @since 9.1
+     */
+    public long getSeq() {
+        return fSeq;
+    }
+
+    /**
+     * @return Ack Sequence Number
+     * @since 9.1
+     */
+    public long getAckseq() {
+        return fAckseq;
+    }
+
+    /**
+     * @return Flags
+     * @since 9.1
+     */
+    public long getFlags() {
+        return fFlags;
+    }
 }
