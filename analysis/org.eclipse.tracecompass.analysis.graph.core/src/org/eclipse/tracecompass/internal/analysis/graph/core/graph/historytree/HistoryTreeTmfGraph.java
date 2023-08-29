@@ -173,6 +173,14 @@ public abstract class HistoryTreeTmfGraph implements ITmfGraph {
         return new TmfVertex(timestamp, attribute);
     }
 
+    public @Nullable IGraphWorker getWorker(Integer workerId) {
+        return this.fWorkerAttrib.inverse().get(workerId);
+    }
+
+    public @Nullable IGraphWorker getWorker(TmfVertex tmfVertex) {
+        return this.getWorker(tmfVertex.getWorkerId());
+    }
+
     private void checkCurrentWorkerTime(TmfVertex vertex) {
         ITmfVertex latest = fCurrentWorkerLatestTime.get(vertex.getWorkerId());
         if (latest != null && latest.getTimestamp() > vertex.getTimestamp()) {
