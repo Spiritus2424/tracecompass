@@ -89,6 +89,11 @@ public class TmfEventDependency {
             return Objects.equals(fTrace, other.fTrace) && Objects.equals(fTimestamp, other.fTimestamp);
         }
 
+        @Override
+        public String toString() {
+            return "[" + fTrace.getName() + ", " + fTimestamp.toNanos() + "]";
+        }
+
     }
 
     /**
