@@ -21,8 +21,6 @@ import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.tracecompass.analysis.graph.core.graph.ITmfGraph;
 import org.eclipse.tracecompass.tmf.core.event.ITmfEvent;
 import org.eclipse.tracecompass.tmf.core.trace.ITmfTrace;
-
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 
 /**
@@ -143,10 +141,9 @@ public abstract class AbstractTmfGraphProvider implements ITmfGraphProvider {
      * Get the list of handlers for this class. Used for unit testing only.
      *
      * @return The list of handlers
-     * @since 1.2
+     * @since 4.2
      */
-    @VisibleForTesting
-    protected List<ITraceEventHandler> getHandlers() {
+    public List<ITraceEventHandler> getHandlers() {
         return ImmutableList.copyOf(fHandlers);
     }
 
