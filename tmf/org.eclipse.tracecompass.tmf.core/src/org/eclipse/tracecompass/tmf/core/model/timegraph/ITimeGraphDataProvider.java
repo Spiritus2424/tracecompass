@@ -101,7 +101,7 @@ public interface ITimeGraphDataProvider<M extends ITimeGraphEntryModel> extends 
      * @return A {@link TmfModelResponse} that encapsulate a map of Tooltips
      * @since 9.1
      */
-    default TmfModelResponse<Map<String, ITmfActionDescriptor>> fetchActionTooltips(Map<String, Object> fetchParameters, @Nullable IProgressMonitor monitor) {
+    default TmfModelResponse<List<ITmfActionDescriptor>> fetchActionTooltips(Map<String, Object> fetchParameters, @Nullable IProgressMonitor monitor) {
         return new TmfModelResponse<>(null, ITmfResponse.Status.FAILED, "Not implemented"); //$NON-NLS-1$
     }
 
@@ -112,9 +112,11 @@ public interface ITimeGraphDataProvider<M extends ITimeGraphEntryModel> extends 
      * @param inputParameters
      * @param monitor
      *            Progress monitor
+     * @return if it is applied
      * @since 9.1
      */
-    default void applyAction(String actionId, Map<String, Object> inputParameters, @Nullable IProgressMonitor monitor) {
+    default boolean applyAction(String actionId, Map<String, Object> inputParameters, @Nullable IProgressMonitor monitor) {
+        return false;
     }
 
 }
