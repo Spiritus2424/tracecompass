@@ -500,10 +500,17 @@ public class ThreadStatusDataProvider extends AbstractTmfTraceDataProvider imple
             states.forEach(i -> {
                 ITimeGraphState timegraphState = createTimeGraphState(i, syscalls);
                 Long key = Objects.requireNonNull(entry.getKey());
-                applyFilterAndAddState(eventList, timegraphState, key, predicates, monitor);
+                if (timegraphState.getStyle() != null) {
+                    applyFilterAndAddState(eventList, timegraphState, key, predicates, monitor);
+                }
             });
-            rows.add(new TimeGraphRowModel(entry.getKey(), eventList));
+
+            if (!eventList.isEmpty()) {
+                rows.add(new TimeGraphRowModel(entry.getKey(), eventList));
+            }
         }
+
+
         return new TmfModelResponse<>(new TimeGraphModel(rows), ITmfResponse.Status.COMPLETED, CommonStatusMessage.COMPLETED);
     }
 
@@ -822,14 +829,14 @@ public class ThreadStatusDataProvider extends AbstractTmfTraceDataProvider imple
 
     @SuppressWarnings({"nls", "null", "restriction"})
     @Override
-    public @NonNull TmfModelResponse<@NonNull Map<@NonNull String, @NonNull ITmfActionDescriptor>> fetchActionTooltips(@NonNull Map<@NonNull String, @NonNull Object> fetchParameters, @Nullable IProgressMonitor monitor) {
+    public @NonNull TmfModelResponse<@NonNull List<@NonNull ITmfActionDescriptor>> fetchActionTooltips(@NonNull Map<@NonNull String, @NonNull Object> fetchParameters, @Nullable IProgressMonitor monitor) {
         List<Long> selectedItems = DataProviderParameterUtils.extractSelectedItems(fetchParameters);
         if (selectedItems == null || selectedItems.isEmpty()) {
             return new TmfModelResponse<>(null, ITmfResponse.Status.FAILED, CommonStatusMessage.INCORRECT_QUERY_PARAMETERS);
         }
         ITmfResponse.Status tmfResponseStatus = ITmfResponse.Status.COMPLETED;
         String statusMessage = CommonStatusMessage.COMPLETED;
-        Map<String, ITmfActionDescriptor> actionTooltips = new HashMap<>();
+        List<ITmfActionDescriptor> actionTooltips = new ArrayList<>();
         TmfActionDescriptor.Builder builder = new TmfActionDescriptor.Builder();
         Integer threadId = this.findThreadId(selectedItems.get(0));
         if (threadId != null) {
@@ -844,7 +851,7 @@ public class ThreadStatusDataProvider extends AbstractTmfTraceDataProvider imple
                     .setTargetProviderType(CriticalPathDataProvider.ID)
                     .setInputParameters(followThreadInputParameter)
                     .build();
-            actionTooltips.put(followThreadDescriptor.getId(), followThreadDescriptor);
+            actionTooltips.add(followThreadDescriptor);
         } else {
             tmfResponseStatus = ITmfResponse.Status.FAILED;
             statusMessage = "Unable to find the Thread ID associated with the entry Id";
@@ -855,14 +862,19 @@ public class ThreadStatusDataProvider extends AbstractTmfTraceDataProvider imple
 
     @Override
     @SuppressWarnings({"null", "nls", "unchecked"})
-    public void applyAction(String actionId, Map<String, Object> inputParameters, @Nullable IProgressMonitor monitor) {
+    public boolean applyAction(String actionId, Map<String, Object> inputParameters, @Nullable IProgressMonitor monitor) {
+        boolean applied = false;
         if (actionId.equals(FollowThreadAction.getActionId()) && inputParameters.containsKey("hostThread")) {
             @NonNull Map<String, Object> hostThread = (Map<String, Object>) inputParameters.get("hostThread");
             if (this.getTrace().getHostId().equals(hostThread.get("host"))) {
                 FollowThreadAction followThreadAction = new FollowThreadAction(new HostThread((String) hostThread.get("host"), (Integer) hostThread.get("tid")));
                 followThreadAction.run();
+                applied = true;
             }
         }
+
+
+        return applied;
     }
 
     @Override
