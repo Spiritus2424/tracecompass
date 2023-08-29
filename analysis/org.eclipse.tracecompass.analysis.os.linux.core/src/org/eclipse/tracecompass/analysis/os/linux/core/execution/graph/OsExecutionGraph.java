@@ -13,6 +13,8 @@ package org.eclipse.tracecompass.analysis.os.linux.core.execution.graph;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 import org.eclipse.jdt.annotation.NonNull;
@@ -43,6 +45,9 @@ public class OsExecutionGraph extends AbstractTmfGraphBuilderModule {
     public static final String ANALYSIS_ID = "org.eclipse.tracecompass.analysis.os.linux.execgraph"; //$NON-NLS-1$
 
     private @Nullable OSCriticalPathModule fCriticalPathModule;
+
+
+    private Map<ITmfTrace, ITmfGraphProvider> fTmfGraphProviders = new HashMap<>();
 
     private static class OsWorkerSerializer implements WorkerSerializer {
 
@@ -78,12 +83,28 @@ public class OsExecutionGraph extends AbstractTmfGraphBuilderModule {
 
     @Override
     protected ITmfGraphProvider getGraphProvider() {
-        ITmfTrace trace = getTrace();
-        if (trace == null) {
+        ITmfTrace tmfTrace = getTrace();
+        if (tmfTrace == null) {
             throw new NullPointerException();
         }
-        return new OsExecutionGraphProvider(trace);
+
+        return this.fTmfGraphProviders.computeIfAbsent(tmfTrace, trace -> new OsExecutionGraphProvider(trace));
     }
+
+    /**
+     * @since 8.1
+     */
+    public OsExecutionGraphProvider getOsExecutionGraphProvider() {
+        return  (OsExecutionGraphProvider) this.getGraphProvider();
+    }
+
+//
+//    public TraceEventHandlerExecutionGraph getTraceEventHandlerExecutionGraph() {
+//        OsExecutionGraphProvider osExecutionGraphProvider = (OsExecutionGraphProvider) this.getGraphProvider();
+//
+//        osExecutionGraphProvider.getTraceEventHandler();
+//
+//    }
 
     @Override
     protected @Nullable ITmfGraph createGraphInstance(Path htFile, WorkerSerializer workerSerializer, long startTime, int version) {
