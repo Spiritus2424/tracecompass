@@ -41,8 +41,8 @@ import org.eclipse.tracecompass.tmf.core.timestamp.TmfTimeRange;
 import org.eclipse.tracecompass.tmf.core.trace.ITmfTrace;
 import org.eclipse.tracecompass.tmf.core.trace.TmfTraceManager;
 import org.eclipse.tracecompass.tmf.core.trace.experiment.TmfExperiment;
+import org.eclipse.tracecompass.tmf.core.util.Pair;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
@@ -88,6 +88,7 @@ public class TmfEventMatching implements ITmfEventMatching {
      * key class
      */
     private final Map<Class<? extends IEventMatchingKey>, Table<String, String, TmfEventDependency>> fLastMatches = new HashMap<>();
+
 
     /**
      * Enum for cause and effect types of event
@@ -177,8 +178,9 @@ public class TmfEventMatching implements ITmfEventMatching {
      * @param trace
      *            The trace
      * @return The match event definition object
+     * @since 9.1
      */
-    protected Collection<ITmfMatchEventDefinition> getEventDefinitions(ITmfTrace trace) {
+    public Collection<ITmfMatchEventDefinition> getEventDefinitions(ITmfTrace trace) {
         return ImmutableList.copyOf(fMatchMap.get(trace));
     }
 
@@ -221,15 +223,46 @@ public class TmfEventMatching implements ITmfEventMatching {
         final String cr = System.getProperty("line.separator"); //$NON-NLS-1$
         StringBuilder b = new StringBuilder();
         b.append(getProcessingUnit());
-        int i = 0;
+        b.append(cr);
         for (ITmfTrace trace : getIndividualTraces()) {
-            b.append("Trace " + i++ + ":" + cr + //$NON-NLS-1$ //$NON-NLS-2$
-                    "  " + fUnmatchedIn.row(trace).size() + " unmatched incoming events" + cr + //$NON-NLS-1$ //$NON-NLS-2$
-                    "  " + fUnmatchedOut.row(trace).size() + " unmatched outgoing events" + cr); //$NON-NLS-1$ //$NON-NLS-2$
+            b.append("Trace " + trace.getName() + ":" + cr); //$NON-NLS-1$ //$NON-NLS-2$
+            b.append("  " + fUnmatchedIn.row(trace).size() + " unmatched incoming events" + cr); //$NON-NLS-1$ //$NON-NLS-2$
+            for (Entry<IEventMatchingKey, DependencyEvent> cell: fUnmatchedIn.row(trace).entrySet()){
+                b.append(cell.getKey() + " " + cell.getValue() + cr); //$NON-NLS-1$ //$NON-NLS-2$
+            }
+            b.append("  " + fUnmatchedOut.row(trace).size() + " unmatched outgoing events" + cr); //$NON-NLS-1$ //$NON-NLS-2$
+            for (Entry<IEventMatchingKey, DependencyEvent> cell: fUnmatchedOut.row(trace).entrySet()){
+                b.append(cell.getKey() + " " + cell.getValue() + cr); //$NON-NLS-1$ //$NON-NLS-2$
+            }
         }
 
         return b.toString();
     }
+
+    /**
+     * @param event
+     * @return Pair of Direction and Event key
+     * @since 9.1
+     */
+    public Pair<Direction, IEventMatchingKey> getPairOfDirectionAndEventMatchingKey(ITmfEvent event) {
+        Pair<Direction, IEventMatchingKey> pair = null;
+        for (ITmfMatchEventDefinition tmfMatchEventDefinition : getEventDefinitions(event.getTrace())) {
+            /*
+             * Make sure this definition generates an event key, maybe
+             * another definition does
+             */
+            Direction direction = tmfMatchEventDefinition.getDirection(event);
+            IEventMatchingKey eventKey = tmfMatchEventDefinition.getEventKey(event);
+            if (direction != null && eventKey != null) {
+                pair = new Pair<>(direction, eventKey);
+                break;
+            }
+        }
+
+
+        return pair;
+    }
+
 
     /**
      * Matches one event
@@ -243,33 +276,18 @@ public class TmfEventMatching implements ITmfEventMatching {
      * @since 1.0
      */
     public void matchEvent(ITmfEvent event, ITmfTrace trace, @NonNull IProgressMonitor monitor) {
-        ITmfMatchEventDefinition def = null;
-        Direction evType = null;
-        IEventMatchingKey eventKey = null;
-        for (ITmfMatchEventDefinition oneDef : getEventDefinitions(event.getTrace())) {
-            def = oneDef;
-            evType = def.getDirection(event);
-            if (evType != null) {
-                /*
-                 * Make sure this definition generates an event key, maybe
-                 * another definition does
-                 */
-                eventKey = def.getEventKey(event);
-                if (eventKey != null) {
-                    break;
-                }
-            }
-
-        }
-
-        if (def == null || evType == null || eventKey == null) {
+        Pair<Direction, IEventMatchingKey> pairOfDirectionAndEventMatchingKey = this.getPairOfDirectionAndEventMatchingKey(event);
+        if (pairOfDirectionAndEventMatchingKey == null) {
             return;
         }
 
+
+        Direction direction = pairOfDirectionAndEventMatchingKey.getFirst();
+        IEventMatchingKey eventKey = pairOfDirectionAndEventMatchingKey.getSecond();
         Table<ITmfTrace, IEventMatchingKey, DependencyEvent> unmatchedTbl, companionTbl;
 
         /* Point to the appropriate table */
-        switch (evType) {
+        switch (direction) {
         case EFFECT:
             unmatchedTbl = fUnmatchedIn;
             companionTbl = fUnmatchedOut;
@@ -290,7 +308,7 @@ public class TmfEventMatching implements ITmfEventMatching {
                 DependencyEvent companionEvent = companionTbl.remove(mTrace, eventKey);
 
                 /* Create the dependency object */
-                switch (evType) {
+                switch (direction) {
                 case EFFECT:
                     dep = new TmfEventDependency(companionEvent, depEvent);
                     break;
@@ -466,10 +484,9 @@ public class TmfEventMatching implements ITmfEventMatching {
      * Get the table of unmatched effect events (incoming)
      *
      * @return The table of unmatched incoming events
-     * @since 3.3
+     * @since 9.1
      */
-    @VisibleForTesting
-    protected Table<ITmfTrace, IEventMatchingKey, DependencyEvent> getUnmatchedIn() {
+    public Table<ITmfTrace, IEventMatchingKey, DependencyEvent> getUnmatchedIn() {
         return fUnmatchedIn;
     }
 
@@ -477,12 +494,12 @@ public class TmfEventMatching implements ITmfEventMatching {
      * Get the table of unmatched cause events (outgoing)
      *
      * @return The table of unmatched outgoing events
-     * @since 3.3
+     * @since 9.1
      */
-    @VisibleForTesting
-    protected Table<ITmfTrace, IEventMatchingKey, DependencyEvent> getUnmatchedOut() {
+    public Table<ITmfTrace, IEventMatchingKey, DependencyEvent> getUnmatchedOut() {
         return fUnmatchedOut;
     }
+
 
 }
 
