@@ -54,8 +54,6 @@ public class FollowThreadAction implements ITmfAction {
 
     @Override
     public void run() {
-        // TODO: Remove when this issue https://github.com/eclipse-cdt-cloud/theia-trace-extension/issues/1003 is fixed
-//        TmfSignalManager.dispatchSignal(new TmfTraceSelectedSignal(this, this.fTmfExperiment));
         TmfSignalManager.dispatchSignal(new TmfThreadSelectedSignal(this, this.fHostThread));
     }
 
