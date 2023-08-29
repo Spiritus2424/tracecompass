@@ -14,9 +14,13 @@ package org.eclipse.tracecompass.internal.lttng2.kernel.core.analysis.graph.hand
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.tracecompass.analysis.graph.core.graph.ITmfEdgeContextState;
 import org.eclipse.tracecompass.analysis.graph.core.graph.ITmfGraph;
@@ -37,10 +41,12 @@ import org.eclipse.tracecompass.internal.lttng2.kernel.core.TcpEventStrings;
 import org.eclipse.tracecompass.tmf.core.event.ITmfEvent;
 import org.eclipse.tracecompass.tmf.core.event.ITmfEventField;
 import org.eclipse.tracecompass.tmf.core.event.aspect.TmfCpuAspect;
+import org.eclipse.tracecompass.tmf.core.event.matching.IEventMatchingKey;
 import org.eclipse.tracecompass.tmf.core.event.matching.IMatchProcessingUnit;
 import org.eclipse.tracecompass.tmf.core.event.matching.TmfEventDependency;
 import org.eclipse.tracecompass.tmf.core.event.matching.TmfEventDependency.DependencyEvent;
 import org.eclipse.tracecompass.tmf.core.event.matching.TmfEventMatching;
+import org.eclipse.tracecompass.tmf.core.event.matching.TmfEventMatching.Direction;
 import org.eclipse.tracecompass.tmf.core.trace.ITmfTrace;
 import org.eclipse.tracecompass.tmf.core.trace.TmfTraceUtils;
 import org.eclipse.tracecompass.tmf.core.util.Pair;
@@ -70,6 +76,10 @@ public class TraceEventHandlerExecutionGraph extends BaseHandler {
     private Map<DependencyEvent, ITmfVertex> fTcpNodes;
     private TmfEventMatching fTcpMatching;
     private Map<OsWorker, Pair<ITmfVertex, ITmfVertex>> fLatestReceivedNetworkLink = new HashMap<>();
+
+
+    private Map<@NonNull ITmfVertex, @NonNull IEventMatchingKey> fUnmatchedTmfVertex = new HashMap<>();
+
 
     /**
      * Constructor
@@ -102,12 +112,15 @@ public class TraceEventHandlerExecutionGraph extends BaseHandler {
                 if (match == null) {
                     return;
                 }
+
                 ITmfGraph graph = NonNullUtils.checkNotNull(getProvider().getGraph());
                 ITmfVertex output = fTcpNodes.remove(match.getSource());
                 ITmfVertex input = fTcpNodes.remove(match.getDestination());
                 if (output != null && input != null) {
                     fLatestReceivedNetworkLink.put((OsWorker) graph.getParentOf(input), new Pair<>(output, input));
                     // graph.linkVertical(output, input, EdgeType.NETWORK, null);
+                    fUnmatchedTmfVertex.remove(output);
+                    fUnmatchedTmfVertex.remove(input);
                 }
             }
 
@@ -121,6 +134,23 @@ public class TraceEventHandlerExecutionGraph extends BaseHandler {
         ITmfTrace trace = provider.getTrace();
         fTcpMatching = new TmfEventMatching(Collections.singleton(trace), fMatchProcessing);
         fTcpMatching.initMatching();
+    }
+
+    public TmfEventMatching getTcpMatching() {
+        return this.fTcpMatching;
+    }
+
+    public Map<ITmfVertex, IEventMatchingKey> getUnmatchedTmfVertex() {
+        return this.fUnmatchedTmfVertex;
+    }
+
+    @SuppressWarnings("null")
+    public List<@NonNull ITmfVertex> findUnmatchedTmfVertex(long start, long end) {
+        return this.fUnmatchedTmfVertex.entrySet().parallelStream()
+                .filter(entry -> entry.getKey().getTimestamp() >= start && entry.getKey().getTimestamp() <= end)
+                .map(entry -> entry.getKey())
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
     }
 
     private OsWorker getOrCreateKernelWorker(ITmfEvent event, Integer cpu) {
@@ -392,6 +422,7 @@ public class TraceEventHandlerExecutionGraph extends BaseHandler {
             // create edge if wake up is caused by incoming packet
             OsWorker k = getOrCreateKernelWorker(event, cpu);
             ITmfVertex tail = graph.getTail(k);
+
             if (tail != null) {
                 replaceIncomingNetworkEdge(graph, k, tail, wupTarget);
             }
@@ -506,8 +537,10 @@ public class TraceEventHandlerExecutionGraph extends BaseHandler {
             return;
         }
         ITmfVertex endpoint = stateExtend(receiver, event.getTimestamp().getValue());
+        this.addUnmatchTmfVertex(event, endpoint);
         fTcpNodes.put(new DependencyEvent(event), endpoint);
         fTcpMatching.matchEvent(event, event.getTrace(), DEFAULT_PROGRESS_MONITOR);
+
     }
 
     private void handleInetSockLocalOut(ITmfEvent event) {
@@ -531,9 +564,18 @@ public class TraceEventHandlerExecutionGraph extends BaseHandler {
             return;
         }
         ITmfVertex endpoint = stateExtend(sender, event.getTimestamp().getValue());
+        this.addUnmatchTmfVertex(event, endpoint);
         fTcpNodes.put(new DependencyEvent(event), endpoint);
         // TODO, add actual progress monitor
         fTcpMatching.matchEvent(event, event.getTrace(), DEFAULT_PROGRESS_MONITOR);
+    }
+
+    private void addUnmatchTmfVertex(ITmfEvent event, ITmfVertex tmfVertex) {
+        Pair<Direction, IEventMatchingKey> pair = this.fTcpMatching.getPairOfDirectionAndEventMatchingKey(event);
+
+        if (pair != null) {
+            this.fUnmatchedTmfVertex.put(tmfVertex, pair.getSecond());
+        }
     }
 
     private void handleSoftirqEntry(ITmfEvent event) {
