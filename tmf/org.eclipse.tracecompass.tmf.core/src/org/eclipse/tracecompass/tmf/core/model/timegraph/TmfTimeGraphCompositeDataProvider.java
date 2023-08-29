@@ -190,24 +190,29 @@ extends TmfTreeCompositeDataProvider<M, P> implements ITimeGraphDataProvider<M>,
 
     @SuppressWarnings({"null"})
     @Override
-    public @NonNull TmfModelResponse<@NonNull Map<@NonNull String, @NonNull ITmfActionDescriptor>> fetchActionTooltips(@NonNull Map<@NonNull String, @NonNull Object> fetchParameters, @Nullable IProgressMonitor monitor) {
-        Map<String, ITmfActionDescriptor> actionTooltips = new HashMap<String, ITmfActionDescriptor>();
+    public @NonNull TmfModelResponse<@NonNull List<@NonNull ITmfActionDescriptor>> fetchActionTooltips(@NonNull Map<@NonNull String, @NonNull Object> fetchParameters, @Nullable IProgressMonitor monitor) {
+        List<ITmfActionDescriptor> actionTooltips = new ArrayList<>();
 
         for (P dataProvider: getProviders()) {
-            TmfModelResponse<Map<String, ITmfActionDescriptor>> response = dataProvider.fetchActionTooltips(fetchParameters, monitor);
-            Map<String, ITmfActionDescriptor> model = response.getModel();
+            TmfModelResponse<List<ITmfActionDescriptor>> response = dataProvider.fetchActionTooltips(fetchParameters, monitor);
+            List<ITmfActionDescriptor> model = response.getModel();
             if (model != null) {
-                actionTooltips.putAll(model);
+                actionTooltips.addAll(model);
             }
         }
         return new TmfModelResponse<>(actionTooltips, ITmfResponse.Status.COMPLETED, CommonStatusMessage.COMPLETED);
     }
 
     @Override
-    public void applyAction(String actionId, Map<String, Object> inputParameters, @Nullable IProgressMonitor monitor) {
+    public boolean applyAction(String actionId, Map<String, Object> inputParameters, @Nullable IProgressMonitor monitor) {
+        boolean applied = false;
         for (P dataProvider: getProviders()) {
-            dataProvider.applyAction(actionId, inputParameters, monitor);
+            if (dataProvider.applyAction(actionId, inputParameters, monitor)) {
+                applied = true;
+            }
         }
+
+        return applied;
     }
 
 }
