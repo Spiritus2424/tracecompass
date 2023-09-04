@@ -20,4 +20,3 @@ RUN mvn clean install -DskipTests -Dskip-rcp -Pfilter-grammar -Pctf-grammar
 FROM alpine:3.18.0
 
 COPY --from=packager /root/.m2/ /root/.m2/
-
