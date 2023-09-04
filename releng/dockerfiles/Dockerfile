@@ -19,4 +19,4 @@ RUN mvn clean install -DskipTests -Dskip-rcp -Pfilter-grammar -Pctf-grammar
 
 FROM alpine:3.16.0
 
-COPY --from=packager /root/.m2/repository/org/eclipse/tracecompass /root/.m2/repository/org/eclipse/tracecompass
+COPY --from=packager /root/.m2/ /root/.m2/
