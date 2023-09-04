@@ -16,8 +16,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.annotation.NonNull;
@@ -77,8 +80,8 @@ public class TraceEventHandlerExecutionGraph extends BaseHandler {
     private TmfEventMatching fTcpMatching;
     private Map<OsWorker, Pair<ITmfVertex, ITmfVertex>> fLatestReceivedNetworkLink = new HashMap<>();
 
-
-    private Map<@NonNull ITmfVertex, @NonNull IEventMatchingKey> fUnmatchedTmfVertex = new HashMap<>();
+    private Map<@NonNull ITmfVertex, @NonNull IEventMatchingKey> fUnmatchedInTmfVertex = new HashMap<>();
+    private Map<@NonNull ITmfVertex, @NonNull IEventMatchingKey> fUnmatchedOutTmfVertex = new HashMap<>();
 
 
     /**
@@ -119,8 +122,8 @@ public class TraceEventHandlerExecutionGraph extends BaseHandler {
                 if (output != null && input != null) {
                     fLatestReceivedNetworkLink.put((OsWorker) graph.getParentOf(input), new Pair<>(output, input));
                     // graph.linkVertical(output, input, EdgeType.NETWORK, null);
-                    fUnmatchedTmfVertex.remove(output);
-                    fUnmatchedTmfVertex.remove(input);
+                    fUnmatchedOutTmfVertex.remove(output);
+                    fUnmatchedInTmfVertex.remove(input);
                 }
             }
 
@@ -140,13 +143,38 @@ public class TraceEventHandlerExecutionGraph extends BaseHandler {
         return this.fTcpMatching;
     }
 
-    public Map<ITmfVertex, IEventMatchingKey> getUnmatchedTmfVertex() {
-        return this.fUnmatchedTmfVertex;
+    public Map<ITmfVertex, IEventMatchingKey> getUnmatchedTmfVertex(Optional<Direction> optionalDirection) {
+        Stream<Entry<@NonNull ITmfVertex, @NonNull IEventMatchingKey>> combinedStream = Stream.empty();
+        if (optionalDirection.isEmpty()) {
+            combinedStream = Stream.concat(this.fUnmatchedInTmfVertex.entrySet().stream(), this.fUnmatchedOutTmfVertex.entrySet().stream());
+        } else if (optionalDirection.get() == Direction.CAUSE) {
+            combinedStream = this.fUnmatchedOutTmfVertex.entrySet().stream();
+        } else if (optionalDirection.get() == Direction.EFFECT) {
+            combinedStream = this.fUnmatchedInTmfVertex.entrySet().stream();
+        }
+        return combinedStream.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+    }
+
+    public Map<ITmfVertex, IEventMatchingKey> getUnmatchedInTmfVertex() {
+        return this.fUnmatchedInTmfVertex;
+    }
+
+    public Map<ITmfVertex, IEventMatchingKey> getUnmatchedOutTmfVertex() {
+        return this.fUnmatchedOutTmfVertex;
     }
 
     @SuppressWarnings("null")
-    public List<@NonNull ITmfVertex> findUnmatchedTmfVertex(long start, long end) {
-        return this.fUnmatchedTmfVertex.entrySet().parallelStream()
+    public List<@NonNull ITmfVertex> findUnmatchedTmfVertex(long start, long end, Optional<Direction> optionalDirection) {
+        Stream<Entry<@NonNull ITmfVertex, @NonNull IEventMatchingKey>> combinedStream = Stream.empty();
+        if (optionalDirection.isEmpty()) {
+            combinedStream = Stream.concat(this.fUnmatchedInTmfVertex.entrySet().stream(), this.fUnmatchedOutTmfVertex.entrySet().stream());
+        } else if (optionalDirection.get() == Direction.CAUSE) {
+            combinedStream = this.fUnmatchedOutTmfVertex.entrySet().stream();
+        } else if (optionalDirection.get() == Direction.EFFECT) {
+            combinedStream = this.fUnmatchedInTmfVertex.entrySet().stream();
+        }
+
+        return combinedStream
                 .filter(entry -> entry.getKey().getTimestamp() >= start && entry.getKey().getTimestamp() <= end)
                 .map(entry -> entry.getKey())
                 .filter(Objects::nonNull)
@@ -572,9 +600,10 @@ public class TraceEventHandlerExecutionGraph extends BaseHandler {
 
     private void addUnmatchTmfVertex(ITmfEvent event, ITmfVertex tmfVertex) {
         Pair<Direction, IEventMatchingKey> pair = this.fTcpMatching.getPairOfDirectionAndEventMatchingKey(event);
-
-        if (pair != null) {
-            this.fUnmatchedTmfVertex.put(tmfVertex, pair.getSecond());
+        if (pair != null && pair.getFirst() == Direction.CAUSE) {
+            this.fUnmatchedOutTmfVertex.put(tmfVertex, pair.getSecond());
+        } else if (pair != null && pair.getFirst() == Direction.EFFECT) {
+            this.fUnmatchedInTmfVertex.put(tmfVertex, pair.getSecond());
         }
     }
 
