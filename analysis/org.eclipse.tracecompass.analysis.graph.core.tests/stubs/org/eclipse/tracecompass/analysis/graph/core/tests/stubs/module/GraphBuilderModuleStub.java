@@ -50,7 +50,7 @@ public class GraphBuilderModuleStub extends AbstractTmfGraphBuilderModule {
     }
 
     @Override
-    protected @NonNull AbstractCriticalPathModule getCriticalPathModule() {
+    public @NonNull AbstractCriticalPathModule getCriticalPathModule() {
         if (fCriticalPathModule == null) {
             fCriticalPathModule = new OSCriticalPathModule(this);
         }

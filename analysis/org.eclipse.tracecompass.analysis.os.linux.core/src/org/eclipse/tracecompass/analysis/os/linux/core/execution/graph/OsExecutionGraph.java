@@ -118,8 +118,11 @@ public class OsExecutionGraph extends AbstractTmfGraphBuilderModule {
         return graph;
     }
 
+    /**
+     * @since 8.1
+     */
     @Override
-    protected AbstractCriticalPathModule getCriticalPathModule() {
+    public AbstractCriticalPathModule getCriticalPathModule() {
         if (fCriticalPathModule == null) {
             fCriticalPathModule = new OSCriticalPathModule(this);
         }

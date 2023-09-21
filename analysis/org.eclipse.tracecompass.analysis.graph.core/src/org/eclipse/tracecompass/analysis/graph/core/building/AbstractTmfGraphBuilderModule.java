@@ -64,7 +64,11 @@ public abstract class AbstractTmfGraphBuilderModule extends TmfAbstractAnalysisM
      */
     protected abstract ITmfGraphProvider getGraphProvider();
 
-    protected abstract AbstractCriticalPathModule getCriticalPathModule();
+    /**
+     * @return
+     * @since 4.2
+     */
+    public abstract AbstractCriticalPathModule getCriticalPathModule();
 
     /**
      * @since 3.2
