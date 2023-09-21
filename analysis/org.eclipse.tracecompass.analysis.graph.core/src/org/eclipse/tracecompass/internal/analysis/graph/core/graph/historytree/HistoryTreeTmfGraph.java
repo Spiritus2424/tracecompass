@@ -401,6 +401,30 @@ public abstract class HistoryTreeTmfGraph implements ITmfGraph {
         return headVertex;
     }
 
+    public @Nullable IGraphWorker getPreviousWorker(ITmfVertex tmfVertex) {
+        ITmfVertex currentTmfVertex = tmfVertex;
+        ITmfEdge horizontalEdgeFrom = null;
+        while ((horizontalEdgeFrom = getEdgeFrom(currentTmfVertex, ITmfGraph.EdgeDirection.INCOMING_HORIZONTAL_EDGE)) != null) {
+            currentTmfVertex = horizontalEdgeFrom.getVertexFrom();
+        }
+
+
+        IGraphWorker graphWorker = null;
+        ITmfEdge verticalEdgeFrom = getEdgeFrom(currentTmfVertex, ITmfGraph.EdgeDirection.INCOMING_VERTICAL_EDGE);
+        if (verticalEdgeFrom != null) {
+            graphWorker = this.getParentOf(verticalEdgeFrom.getVertexFrom());
+        } else {
+            verticalEdgeFrom = getEdgeFrom(currentTmfVertex, ITmfGraph.EdgeDirection.OUTGOING_VERTICAL_EDGE);
+        }
+
+        return graphWorker;
+    }
+
+    public @Nullable ITmfVertex getNextTmfVertex(ITmfVertex vertex) {
+        ITmfEdge edgeFrom = getEdgeFrom(vertex, ITmfGraph.EdgeDirection.OUTGOING_HORIZONTAL_EDGE);
+        return edgeFrom == null ? null : edgeFrom.getVertexFrom();
+    }
+
     private @Nullable ITmfVertex getHeadForAttribute(int attribute) {
         try {
             TmfEdgeInterval edge = getSHT().queryEdgeFrom(new TmfVertex(fStartTime, attribute), true);
