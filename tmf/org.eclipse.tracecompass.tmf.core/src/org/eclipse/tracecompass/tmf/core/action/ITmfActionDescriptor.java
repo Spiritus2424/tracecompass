@@ -6,7 +6,7 @@ import org.eclipse.jdt.annotation.NonNullByDefault;
 
 /**
  * @author Ahmad Faour
- * @since 9.1
+ * @since 9.2
  */
 @SuppressWarnings("javadoc")
 @NonNullByDefault

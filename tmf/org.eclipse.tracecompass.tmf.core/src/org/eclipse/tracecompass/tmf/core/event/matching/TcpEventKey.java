@@ -85,7 +85,7 @@ public class TcpEventKey implements IEventMatchingKey {
 
     /**
      * @return Sequence Number
-     * @since 9.1
+     * @since 9.2
      */
     public long getSeq() {
         return fSeq;
@@ -93,7 +93,7 @@ public class TcpEventKey implements IEventMatchingKey {
 
     /**
      * @return Ack Sequence Number
-     * @since 9.1
+     * @since 9.2
      */
     public long getAckseq() {
         return fAckseq;
@@ -101,7 +101,7 @@ public class TcpEventKey implements IEventMatchingKey {
 
     /**
      * @return Flags
-     * @since 9.1
+     * @since 9.2
      */
     public long getFlags() {
         return fFlags;
