@@ -175,7 +175,10 @@ public abstract class AbstractCriticalPathModule extends TmfAbstractAnalysisModu
         return true;
     }
 
-    private @Nullable ITmfGraph createGraph() {
+    /**
+     * @since 4.2
+     */
+    public @Nullable ITmfGraph createGraph() {
         Path htFile = getHistoryTreeFilePath();
         ITmfTrace trace = fGraphModule.getTrace();
         if (trace == null) {
