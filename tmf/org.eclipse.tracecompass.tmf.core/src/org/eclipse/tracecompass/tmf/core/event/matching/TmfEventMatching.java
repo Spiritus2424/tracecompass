@@ -178,7 +178,7 @@ public class TmfEventMatching implements ITmfEventMatching {
      * @param trace
      *            The trace
      * @return The match event definition object
-     * @since 9.1
+     * @since 9.2
      */
     public Collection<ITmfMatchEventDefinition> getEventDefinitions(ITmfTrace trace) {
         return ImmutableList.copyOf(fMatchMap.get(trace));
@@ -242,7 +242,7 @@ public class TmfEventMatching implements ITmfEventMatching {
     /**
      * @param event
      * @return Pair of Direction and Event key
-     * @since 9.1
+     * @since 9.2
      */
     public Pair<Direction, IEventMatchingKey> getPairOfDirectionAndEventMatchingKey(ITmfEvent event) {
         Pair<Direction, IEventMatchingKey> pair = null;
@@ -484,7 +484,7 @@ public class TmfEventMatching implements ITmfEventMatching {
      * Get the table of unmatched effect events (incoming)
      *
      * @return The table of unmatched incoming events
-     * @since 9.1
+     * @since 9.2
      */
     public Table<ITmfTrace, IEventMatchingKey, DependencyEvent> getUnmatchedIn() {
         return fUnmatchedIn;
@@ -494,7 +494,7 @@ public class TmfEventMatching implements ITmfEventMatching {
      * Get the table of unmatched cause events (outgoing)
      *
      * @return The table of unmatched outgoing events
-     * @since 9.1
+     * @since 9.2
      */
     public Table<ITmfTrace, IEventMatchingKey, DependencyEvent> getUnmatchedOut() {
         return fUnmatchedOut;

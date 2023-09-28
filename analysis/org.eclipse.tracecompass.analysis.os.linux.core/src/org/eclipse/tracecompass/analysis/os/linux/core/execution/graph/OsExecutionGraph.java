@@ -92,7 +92,7 @@ public class OsExecutionGraph extends AbstractTmfGraphBuilderModule {
     }
 
     /**
-     * @since 8.1
+     * @since 8.2
      */
     public OsExecutionGraphProvider getOsExecutionGraphProvider() {
         return  (OsExecutionGraphProvider) this.getGraphProvider();
@@ -119,7 +119,7 @@ public class OsExecutionGraph extends AbstractTmfGraphBuilderModule {
     }
 
     /**
-     * @since 8.1
+     * @since 8.2
      */
     @Override
     public AbstractCriticalPathModule getCriticalPathModule() {
