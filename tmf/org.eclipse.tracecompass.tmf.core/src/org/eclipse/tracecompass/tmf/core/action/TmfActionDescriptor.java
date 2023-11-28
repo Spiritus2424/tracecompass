@@ -9,7 +9,7 @@ import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.tracecompass.tmf.core.dataprovider.IDataProviderDescriptor;
 
 /**
- * @since 9.1
+ * @since 9.2
  *
  */
 @SuppressWarnings("null")
