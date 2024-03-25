@@ -20,7 +20,7 @@
          point="org.eclipse.linuxtools.tmf.core.analysis">
       <module
             analysis_module="org.eclipse.tracecompass.internal.tmf.pcap.core.analysis.StreamListAnalysis"
-            automatic="true"
+            automatic="false"
             id="org.eclipse.linuxtools.tmf.pcap.core.analysis.stream"
             name="Stream List">
          <tracetype

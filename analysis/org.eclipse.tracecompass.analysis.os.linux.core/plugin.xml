@@ -6,7 +6,7 @@
          point="org.eclipse.linuxtools.tmf.core.analysis">
       <module
             analysis_module="org.eclipse.tracecompass.analysis.os.linux.core.kernel.KernelAnalysisModule"
-            automatic="true"
+            automatic="false"
             icon="icons/tux-by-lewing_at_isc.tamu.edu.png"
             id="org.eclipse.tracecompass.analysis.os.linux.kernel"
             name="%analysis.linuxkernel">
@@ -33,7 +33,7 @@
             id="org.eclipse.tracecompass.analysis.os.linux.latency.syscall"
             name="%analysis.latency">
          <tracetype
-               applies="true"
+               applies="false"
                class="org.eclipse.tracecompass.analysis.os.linux.core.trace.IKernelTrace">
          </tracetype>
       </module>
@@ -59,7 +59,7 @@
       </module>
       <module
             analysis_module="org.eclipse.tracecompass.analysis.os.linux.core.tid.TidAnalysisModule"
-            automatic="true"
+            automatic="false"
             icon="icons/threads.png"
             id="org.eclipse.tracecompass.analysis.os.linux.kernel.tid"
             name="%analysis.tid">

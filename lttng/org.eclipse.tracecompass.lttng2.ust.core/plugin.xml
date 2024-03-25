@@ -25,7 +25,7 @@
       </module>
       <module
             analysis_module="org.eclipse.tracecompass.lttng2.ust.core.analysis.debuginfo.UstDebugInfoAnalysisModule"
-            automatic="true"
+            automatic="false"
             icon="icons/debug_exc.png"
             id="org.eclipse.linuxtools.lttng2.ust.analysis.debuginfo"
             name="Debug Info">
@@ -47,7 +47,7 @@
       </module>
       <module
             analysis_module="org.eclipse.tracecompass.analysis.counters.core.CounterAnalysis"
-            automatic="true"
+            automatic="false"
             icon="icons/runtime.gif"
             id="org.eclipse.tracecompass.analysis.counters.core.counteranalysis"
             name="Counters">
@@ -57,7 +57,7 @@
       </module>
       <module
             analysis_module="org.eclipse.tracecompass.internal.lttng2.ust.core.analysis.cpu.UstCpuAnalysisModule"
-            automatic="true"
+            automatic="false"
             icon="icons/threads.png"
             id="org.eclipse.linuxtools.lttng2.ust.analysis.cpu"
             name="CPU Analysis">
