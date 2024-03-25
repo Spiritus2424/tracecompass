@@ -16,7 +16,7 @@
          point="org.eclipse.linuxtools.tmf.core.analysis">
       <module
             analysis_module="org.eclipse.tracecompass.analysis.counters.core.CounterAnalysis"
-            automatic="true"
+            automatic="false"
             icon="icons/runtime.gif"
             id="org.eclipse.tracecompass.analysis.counters.core.counteranalysis"
             name="Counters">

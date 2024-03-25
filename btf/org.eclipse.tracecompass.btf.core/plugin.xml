@@ -20,7 +20,7 @@
          point="org.eclipse.linuxtools.tmf.core.analysis">
       <module
             analysis_module="org.eclipse.tracecompass.btf.core.analysis.BtfAnalysisModule"
-            automatic="true"
+            automatic="false"
             id="org.eclipse.linuxtools.btf.core.analysis"
             name="BTF Analysis">
          <tracetype
